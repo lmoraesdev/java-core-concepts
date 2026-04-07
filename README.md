@@ -44,13 +44,15 @@ Instead of only following tutorials, the goal is to:
 
 The codebase is organized by core Java concepts, with each module containing isolated and focused implementations.
 
-
+```
 src/
 ├── basics/        → control flow, primitives, operators
 ├── oop/           → encapsulation, inheritance, polymorphism
 ├── collections/   → List, Set, Map and their implementations
 ├── exceptions/    → custom exceptions and error handling patterns
-├── streams/       → functional programming with streams and lambdas
+├── streams/       → functional programming with streams and lambda
+```
+
 
 Each module contains small, self-contained examples designed to reinforce specific concepts and their practical usage.
 
