@@ -11,7 +11,8 @@ public class BEE1009 {
   public static void main(String[] args) {
     Scanner teclado = new Scanner(System.in);
 
-    String nome = teclado.nextLine();
+    @SuppressWarnings("unused")
+    String nome = teclado.nextLine(); // intentionally ignored
     double salario = teclado.nextDouble();
     double bonus = teclado.nextDouble();
 

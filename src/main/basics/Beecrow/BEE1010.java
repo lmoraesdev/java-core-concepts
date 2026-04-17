@@ -16,11 +16,13 @@ public class BEE1010 {
 
     Scanner scanner = new Scanner(System.in);
 
-    int code1 = scanner.nextInt();
+    @SuppressWarnings("unused")
+    int code1 = scanner.nextInt(); // intentionally ignored
     int quantity1 = scanner.nextInt();
     double price1 = scanner.nextDouble();
 
-    int code2 = scanner.nextInt();
+    @SuppressWarnings("unused")
+    int code2 = scanner.nextInt(); // intentionally ignored
     int quantity2 = scanner.nextInt();
     double price2 = scanner.nextDouble();
 
