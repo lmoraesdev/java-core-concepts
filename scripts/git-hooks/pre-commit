@@ -1,0 +1,28 @@
+#!/bin/bash
+# Git pre-commit hook for security checks
+# Setup: cp scripts/git-hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+set -e
+
+echo "🔒 Running pre-commit security checks..."
+
+# Check for secrets in code
+echo "📋 Checking for hardcoded secrets..."
+if grep -r "password\|secret\|token\|api_key" src/ --include="*.java" | grep -v "test\|TODO\|FIXME"; then
+    echo "⚠️  Possible secrets found in code. Review before committing."
+    exit 1
+fi
+
+# Run Maven checks
+echo "🔨 Running Maven build validation..."
+mvn clean compile -q -DskipTests
+
+# Check for test coverage minimum
+echo "📊 Verifying test execution..."
+if ! mvn test -q 2>/dev/null; then
+    echo "❌ Tests failed. Fix before committing."
+    exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"
+exit 0

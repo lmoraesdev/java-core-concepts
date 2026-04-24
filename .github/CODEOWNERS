@@ -1,0 +1,16 @@
+# CODEOWNERS file for automatic reviewer assignment
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Main code ownership
+/src/                     @lbc_m
+/pom.xml                  @lbc_m
+/.github/workflows/       @lbc_m
+
+# Build and CI/CD
+/mvnw                     @lbc_m
+/mvnw.cmd                 @lbc_m
+/.github/                 @lbc_m
+
+# Documentation
+/SECURITY.md              @lbc_m
+/README.md                @lbc_m

@@ -2,24 +2,72 @@ name: Java CI
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "develop", "main" ]
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "develop", "main" ]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  security-events: write
+
+env:
+  JAVA_VERSION: '21'
+  MAVEN_OPTS: '-Dorg.slf4j.simpleLogger.defaultLogLevel=warn'
 
 jobs:
   build:
+    name: Build, Test & Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+      security-events: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4.2.1
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: ${{ env.JAVA_VERSION }}
           cache: maven
+          cache-dependency-path: pom.xml
 
-      - name: Build and test with Maven
-        run: mvn clean verify
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@v0.24.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Build with Maven
+        run: |
+          mvn -T 1C clean verify \
+            -B \
+            -DskipTests=false \
+            -Dorg.slf4j.simpleLogger.defaultLogLevel=warn \
+            -Dspotbugs.skip=false
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2.16.1
+        if: always()
+        with:
+          files: |
+            target/surefire-reports/**/*.xml
+          check_name: 'Test Results'
+
+
