@@ -17,16 +17,28 @@ env:
   MAVEN_OPTS: '-Dorg.slf4j.simpleLogger.defaultLogLevel=warn'
 
 jobs:
-  security-check:
-    name: Security Checks
+  build:
+    name: Build, Test & Scan
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      checks: write
+      pull-requests: write
       security-events: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4.2.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+          cache-dependency-path: pom.xml
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.24.0
@@ -37,81 +49,25 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
 
-  build:
-    name: Build & Test
-    runs-on: ubuntu-latest
-    needs: security-check
-    permissions:
-      contents: read
-      checks: write
-      pull-requests: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.7
-        with:
-          fetch-depth: 0
-
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4.2.1
-        with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: maven
-          cache-dependency-path: pom.xml
-
-      - name: Verify Maven configuration
-        run: mvn --version && mvn help:describe -Dcmd=verify -q
-
-      - name: Build with Maven (strict mode)
+      - name: Build with Maven
         run: |
-          mvn clean verify \
+          mvn -T 1C clean verify \
             -B \
             -DskipTests=false \
             -Dorg.slf4j.simpleLogger.defaultLogLevel=warn \
             -Dspotbugs.skip=false
 
-      - name: Run OWASP Dependency Check
-        run: mvn org.owasp:dependency-check-maven:check -Dformat=SARIF -DoutputDirectory=.
-
-      - name: Upload OWASP results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: dependency-check-report.sarif
-
-      - name: Check for outdated dependencies
-        run: |
-          mvn versions:display-property-updates \
-            versions:display-dependency-updates \
-            -q 2>&1 | head -20 || true
-
       - name: Publish test results
-        id: publish-test-results
         uses: EnricoMi/publish-unit-test-result-action@v2.16.1
         if: always()
         with:
           files: |
             target/surefire-reports/**/*.xml
           check_name: 'Test Results'
-
-      - name: Comment PR with results
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7.0.1
-        with:
-          script: |
-            const status = '${{ job.status }}' === 'success' ? '✅' : '❌';
-            const testSummary = '${{ steps.publish-test-results.outputs.test_changes }}' || 'Tests completed';
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## Build Results\n\n${status} ${testSummary}\n\n- Java Version: ${{ env.JAVA_VERSION }}\n- Build: ${{ github.sha }}`
-            });
 
 
