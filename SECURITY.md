@@ -4,7 +4,7 @@
 
 Se você descobrir uma vulnerabilidade de segurança, **não abra uma issue pública**. Em vez disso:
 
-1. **Envie um email** para `lbc_m@your-domain.com` com:
+1. **Envie um MR** :
    - Descrição da vulnerabilidade
    - Passos para reproduzir
    - Impacto potencial
